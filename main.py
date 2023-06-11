@@ -1,8 +1,8 @@
-from fastapi import FastAPI
-from fastapi.responses import RedirectResponse
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import JSONResponse
 import uvicorn
-from pydantic import BaseModel
-import json
+from pydantic import BaseModel, constr, validator
+from enum import Enum
 
 app = FastAPI()
 
@@ -388,7 +388,8 @@ def predict_give_places_recommendations(dataset_tourism, dataset_restaurant, dat
   # Return the JSON object
   return result
 
-class reccomendRequest(BaseModel):
+
+class ReccomendRequest(BaseModel):
     query: str
     city: str
     n_days: int
@@ -405,21 +406,75 @@ class reccomendRequest(BaseModel):
                 "cost": 3
             }
         }
+    
 
 @app.get("/")
 async def home():
     return {"message": "Welcome to Reccomendation API!"}
 
 @app.post("/recommend")
-async def recommend_places(inputUser: reccomendRequest):
+async def recommend_places(inputUser: ReccomendRequest):
+    # Format the city input
+    formatted_city = inputUser.city.lower().capitalize()
 
-    # dataset_tourism = pd.read_csv('_USE_THIS_tourism_final_clean_photo_cost.csv')
-    # dataset_restaurant = pd.read_csv('_USE_THIS_restaurant_final_clean_cost_range.csv')
-    # dataset_acommodation = pd.read_csv('_USE_THIS_akomodasi_final_clean.csv')
+    try:
+        # Validate the input
+        if len(inputUser.query) > 256:
+            return JSONResponse(
+                status_code=400,
+                content={"message": "Query must not exceed 256 characters"}
+            )
 
-    # Run recommendation system
-    result = predict_give_places_recommendations(dataset_tourism,dataset_restaurant,dataset_acommodation, inputUser.query, inputUser.city, inputUser.n_days, inputUser.n_people, inputUser.cost)
-    return result
+        if formatted_city not in ["Jakarta", "Bandung", "Yogyakarta", "Semarang", "Surabaya"]:
+            return JSONResponse(
+                status_code=400,
+                content={"message": "Invalid city. Must be one of Jakarta, Bandung, Yogyakarta, Semarang, or Surabaya."}
+            )
+
+        if inputUser.n_days < 1 or inputUser.n_days > 13:
+            return JSONResponse(
+                status_code=400,
+                content={"message": "Invalid n_days. Must be between 1 and 13."}
+            )
+
+        if inputUser.cost not in [1, 2, 3, 4]:
+            return JSONResponse(
+                status_code=400,
+                content={"message": "Invalid cost. Must be one of 1, 2, 3, or 4."}
+            )
+
+        if inputUser.n_people < 1:
+            return JSONResponse(
+                status_code=400,
+                content={"message": "Invalid n_people. Must be at least 1."}
+            )
+
+        # Run recommendation system
+        result = predict_give_places_recommendations(
+            dataset_tourism,
+            dataset_restaurant,
+            dataset_acommodation,
+            inputUser.query,
+            formatted_city,
+            inputUser.n_days,
+            inputUser.n_people,
+            inputUser.cost
+        )
+
+        if result is None:
+            return JSONResponse(
+                status_code=209,
+                content={"message": "Data not found"}
+            )
+
+        return result
+
+    except Exception as e:
+        return JSONResponse(
+                status_code=209,
+                content={"message": "Data not found"}
+            )
+
 
 if __name__ == '__main__':
     uvicorn.run('main:app', host='0.0.0.0', port=8000,
