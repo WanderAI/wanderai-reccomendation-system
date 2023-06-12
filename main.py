@@ -51,6 +51,15 @@ import re
 import numpy as np
 tfidf=TfidfVectorizer()
 
+def convert_numpy_types(obj):
+    if isinstance(obj, np.integer):
+        return int(obj)
+    elif isinstance(obj, np.floating):
+        return float(obj)
+    elif isinstance(obj, np.ndarray):
+        return obj.tolist()
+    return obj
+
 def query_preprocess(query):
   print("Cleaning query. Lowercaseing, removing stopwords, ")
   query = query.lower()
@@ -369,7 +378,7 @@ def predict_give_places_recommendations(dataset_tourism, dataset_restaurant, dat
     df['rating'] = df.apply(lambda x: x['Rating']*2,axis=1)
     df.rename(columns={'Place_Name':'name','Category':'category', 'City':'city', 'Lat':'geometry_location_lat', 'Long':'geometry_location_lng','Description':'description'},inplace=True)
     tourism_lists_each_day_fin.append(df[['place_id', 'name','image_link', 'description', 'category', 'city', 'rating', 'geometry_location_lat', 'geometry_location_lng', 
-    'formatted_address','cost_range_min', 'cost_range_max']])
+    'formatted_address','cost_range_min', 'cost_range_max']].to_dict(orient='records'))
 
   for df in restaurants_recommendations_each_day:
     df['rating'] = df.apply(lambda x:x['rating']*2, axis=1)
@@ -481,7 +490,8 @@ async def recommend_places(inputUser: ReccomendRequest):
             inputUser.n_people,
             inputUser.cost
         )
-
+        
+        print(result)
         if result is None:
             return JSONResponse(
                 status_code=209,
