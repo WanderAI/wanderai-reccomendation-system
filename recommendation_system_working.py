@@ -27,7 +27,7 @@ from haversine import haversine, Unit
 
 """ALL of these datasets have been cleaned, and ready to be used"""
 
-dataset_tourism = pd.read_csv('_USE_THIS_tourism_final_clean_photo_cost.csv')
+dataset_tourism = pd.read_csv('_USE_THIS_tourism_final_clean_banget.csv')
 dataset_restaurant = pd.read_csv('_USE_THIS_restaurant_final_clean_cost_range.csv')
 dataset_acommodation = pd.read_csv('_USE_THIS_akomodasi_final_clean.csv')
 
@@ -232,8 +232,8 @@ def get_restaurants_each_day(place_recommendation_dataset, centroid, restaurant_
       # make a new columns to save the distance to this cluster/day
       restaurant_dataset["distance_part_of_cluster"] = restaurant_dataset.apply(lambda x: x[f"distance_cluster_{label}"], axis=1) 
 
-      # take 4 closest for each day  
-      resturants_for_each_day.append(restaurant_dataset.iloc[:4]) 
+      # take 3 closest for each day  
+      resturants_for_each_day.append(restaurant_dataset.iloc[:3]) 
       # to ensure no duplicate choice
       restaurant_dataset.drop(restaurant_dataset.index[0:4], inplace=True)
     
@@ -358,15 +358,20 @@ def predict_give_places_recommendations(dataset_tourism, dataset_restaurant, dat
   restaurants_recommendations_each_day_fin = []
   # print(tourism_lists_each_day[0].columns)
   for df in tourism_lists_each_day:
-    tourism_lists_each_day_fin.append(df[['place_id', 'Place_Name','image_link', 'Description', 'Category', 'City', 'Rating','Lat', 'Long', 'cost_range_min', 'cost_range_max']])
+    df['rating'] = df.apply(lambda x: x['Rating']*2,axis=1)
+    df.rename(columns={'Place_Name':'name','Category':'category', 'City':'city', 'Lat':'geometry_location_lat', 'Long':'geometry_location_lng','Description':'description'},inplace=True)
+    tourism_lists_each_day_fin.append(df[['place_id', 'name','image_link', 'description', 'category', 'city', 'rating', 'geometry_location_lat', 'geometry_location_lng', 
+    'formatted_address','cost_range_min', 'cost_range_max']])
   
   # print(restaurants_recommendations_each_day[0].columns)
   for df in restaurants_recommendations_each_day:
+    df['rating'] = df.apply(lambda x:x['rating']*2, axis=1)
     restaurants_recommendations_each_day_fin.append(df[['place_id', 'link_restaurant',
-       'name', 'formatted_address', 'geometry_location_lat','geometry_location_lng', 'tipe_makanan', 'level_price', 'rating_ten', 'cost_range_min', 'cost_range_max','distance_part_of_cluster']])
+       'name', 'formatted_address', 'geometry_location_lat','geometry_location_lng', 'tipe_makanan', 'level_price', 'rating', 'cost_range_min', 'cost_range_max','distance_part_of_cluster']])
   # print(acommodations_recommendations.columns)
+  acommodations_recommendations.rename(columns={'rating.1':'rating'})
   acommodations_recommendations = acommodations_recommendations[['place_icon_image',
-       'acommodation_name_concatenated', 'formatted_address', 'geometry_location_lat', 'geometry_location_lng', 'acommodation_type', 'lokasi', 'rate_level', 'rating.1',
+       'name', 'formatted_address', 'geometry_location_lat', 'geometry_location_lng', 'acommodation_type', 'lokasi', 'rate_level', 'rating',
        'num_of_reviews', 'price_per_night', 'distance_avg']]
   print("...RECOMMENDATION PROCESS DONE")
   # Give output places & restaurants to visit that's already sorted into different days, recommended acommodations, cost_minimum, cost_maximum  
@@ -385,6 +390,8 @@ if __name__ == "__main__":
 
   tourism_lists_each_day_fin,restaurants_recommendations_each_day_fin, acommodations_recommendations, cost_minimum_per_person, cost_maximum_per_person, cost_minimum, cost_maximum = predict_give_places_recommendations(dataset_tourism,dataset_restaurant,dataset_acommodation,QUERY, CITY, N_DAYS, N_PEOPLE, COST)
 
-  print(tourism_lists_each_day_fin[0])
+  # print(tourism_lists_each_day_fin[0].columns)
+  # print(restaurants_recommendations_each_day_fin[0]['rating'])
+
 
 """ INI TOLONG DI RETURN AJA SEMUANYA, HARUSNYA SEMUA BISA DIGUNAKAN """
