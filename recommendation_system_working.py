@@ -127,11 +127,11 @@ def filter_result_by_location_cost(places_list, city, cost):
 
 from sklearn.cluster import KMeans
 
-def clustering_places_kmeans(places_recc_list):
+def clustering_places_kmeans(places_recc_list, n_days):
   dataset_cluster = places_recc_list[['index','Lat','Long']]
   print("CLUSTERING PLACES BASED ON THEIR LOCATION")
 
-  kmeans = KMeans(n_clusters = N_DAYS, init ='k-means++')
+  kmeans = KMeans(n_clusters = n_days, init ='k-means++')
   kmeans.fit(dataset_cluster[['Lat','Long']]) # Compute k-means clustering.
   dataset_cluster['cluster_label'] = kmeans.fit_predict(dataset_cluster[['Lat','Long']])
   centers = kmeans.cluster_centers_ # Coordinates of cluster centers.
@@ -330,17 +330,17 @@ def calculate_cost_min_max(tourism_recommendations_each_day, restaurants_recomme
 def predict_give_places_recommendations(dataset_tourism, dataset_restaurant, dataset_acommodation, query, city, n_days, n_people, cost):
   tfidf = TfidfVectorizer()
 
+  # filtering #1, city and cost
+  dataset_tourism = filter_result_by_location_cost(dataset_tourism, city, cost)
+
   # clean query and give recommends with content-based filtering
   cos_list, id = recommendation_with_query(dataset_tourism, tfidf, query, city)
 
   # take the first n recommendations
   places_list, sorted_scores_list =  get_the_first_n_recommendation_places_and_scores(dataset_tourism, cos_list, id, n_days*8)
 
-  # filtering #1, city and cost
-  places_list = filter_result_by_location_cost(places_list, city, cost)
-
   # clustering
-  dataset_clustered, centroid, labels = clustering_places_kmeans(places_list)
+  dataset_clustered, centroid, labels = clustering_places_kmeans(places_list, n_days)
 
   # filtering #2, n of day
   tourism_lists_each_day, num_of_places_per_day = filter_num_of_places_in_a_day_sorted(dataset_clustered)
@@ -376,13 +376,15 @@ def predict_give_places_recommendations(dataset_tourism, dataset_restaurant, dat
 if __name__ == "__main__":
   """### EXAMPLE PREDICTION"""
 
-  N_DAYS = 4
-  CITY = "Yogyakarta"
-  QUERY = "taman kota"
-  COST = 4
+  N_DAYS = 2
+  CITY = "Bandung"
+  QUERY = "tempat belajar dan mengerjakan tugas sambil Menikmati musik dan alam"
+  COST = 1
   N_PEOPLE = 3
 
 
   tourism_lists_each_day_fin,restaurants_recommendations_each_day_fin, acommodations_recommendations, cost_minimum_per_person, cost_maximum_per_person, cost_minimum, cost_maximum = predict_give_places_recommendations(dataset_tourism,dataset_restaurant,dataset_acommodation,QUERY, CITY, N_DAYS, N_PEOPLE, COST)
+
+  print(tourism_lists_each_day_fin[0])
 
 """ INI TOLONG DI RETURN AJA SEMUANYA, HARUSNYA SEMUA BISA DIGUNAKAN """

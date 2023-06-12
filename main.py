@@ -338,14 +338,15 @@ def calculate_cost_min_max(tourism_recommendations_each_day, restaurants_recomme
 def predict_give_places_recommendations(dataset_tourism, dataset_restaurant, dataset_acommodation, query, city, n_days, n_people, cost):
   tfidf = TfidfVectorizer()
 
+  # filtering #1, city and cost
+  dataset_tourism = filter_result_by_location_cost(dataset_tourism, city, cost)
+
   # clean query and give recommends with content-based filtering
   cos_list, id = recommendation_with_query(dataset_tourism, tfidf, query, city)
 
   # take the first n recommendations
   places_list, sorted_scores_list =  get_the_first_n_recommendation_places_and_scores(dataset_tourism, cos_list, id, n_days*8)
 
-  # filtering #1, city and cost
-  places_list = filter_result_by_location_cost(places_list, city, cost)
 
   # clustering
   dataset_clustered, centroid, labels = clustering_places_kmeans(places_list, n_days)
@@ -399,8 +400,8 @@ class ReccomendRequest(BaseModel):
     class Config:
         schema_extra = {
             "example": {
-                "query": "Kota Tua",
-                "city": "Yogyakarta",
+                "query": "Tempat untuk menikmati suasana alam",
+                "city": "Bandung",
                 "n_days": 5,
                 "n_people": 2,
                 "cost": 3
