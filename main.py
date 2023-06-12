@@ -423,31 +423,46 @@ async def recommend_places(inputUser: ReccomendRequest):
         if len(inputUser.query) > 256:
             return JSONResponse(
                 status_code=400,
-                content={"message": "Query must not exceed 256 characters"}
+                content={
+                            "message": "Query exceeding limit",
+                            "detail": "Query must not exceed 256 characters."
+                        }
             )
 
         if formatted_city not in ["Jakarta", "Bandung", "Yogyakarta", "Semarang", "Surabaya"]:
             return JSONResponse(
                 status_code=400,
-                content={"message": "Invalid city. Must be one of Jakarta, Bandung, Yogyakarta, Semarang, or Surabaya."}
+                content={
+                            "message": "Invalid city",
+                            "detail": "Invalid city. Must be one of Jakarta, Bandung, Yogyakarta, Semarang, or Surabaya."
+                        }
             )
 
         if inputUser.n_days < 1 or inputUser.n_days > 13:
             return JSONResponse(
                 status_code=400,
-                content={"message": "Invalid n_days. Must be between 1 and 13."}
+                content={
+                            "message": "Invalid n_days",
+                            "detail": "Invalid n_days. Must be between 1 and 13."
+                        }
             )
 
         if inputUser.cost not in [1, 2, 3, 4]:
             return JSONResponse(
                 status_code=400,
-                content={"message": "Invalid cost. Must be one of 1, 2, 3, or 4."}
+                content={
+                            "message": "Invalid cost",
+                            "detail": "Invalid cost. Must be one of 1, 2, 3, or 4."
+                        }
             )
 
         if inputUser.n_people < 1:
             return JSONResponse(
                 status_code=400,
-                content={"message": "Invalid n_people. Must be at least 1."}
+                content={
+                            "message": "Invalid n_people",
+                            "detail": "Invalid n_people. Must be at least 1."
+                        }
             )
 
         # Run recommendation system
